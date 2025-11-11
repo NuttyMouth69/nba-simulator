@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏀 Live NBA Game Simulator</title>
+    <style>
+        :root {
+            /* CRITICAL: Storage Restriction - Use JavaScript variables only */
+            /* localStorage is disabled in sandboxed environment */
+            /* Primitive Color Tokens */
+            --color-white: rgba(255, 255, 255, 1);
+            --color-black: rgba(0, 0, 0, 1);
+            --color-cream-50: rgba(252, 252, 249, 1);
+            --color-cream-100: rgba(255, 255, 253, 1);
+            --color-gray-200: rgba(245, 245, 245, 1);
+            --color-gray-300: rgba(167, 169, 169, 1);
+            --color-gray-400: rgba(119, 124, 124, 1);
+            --color-slate-500: rgba(98, 108, 113, 1);
+            --color-brown-600: rgba(94, 82, 64, 1);
+            --color-charcoal-700: rgba(31, 33, 33, 1);
+            --color-charcoal-800: rgba(38, 40, 40, 1);
+            --color-slate-900: rgba(19, 52, 59, 1);
+            --color-teal-300: rgba(50, 184, 198, 1);
+            --color-teal-400: rgba(45, 166, 178, 1);
+            --color-teal-500: rgba(33, 128, 141, 1);
+            --color-teal-600: rgba(29, 116, 128, 1);
+            --color-teal-700: rgba(26, 104, 115, 1);
+            --color-teal-800: rgba(41, 150, 161, 1);
+            --color-red-400: rgba(255, 84, 89, 1);
+            --color-red-500: rgba(192, 21, 47, 1);
+            --color-orange-400: rgba(230, 129, 97, 1);
+            --color-orange-500: rgba(168, 75, 47, 1);
+
+            /* NBA Theme Colors */
+            --nba-blue: #17408B;
+            --nba-red: #C9082A;
+            --nba-orange: #FF6B35;
+            --success-green: #10B981;
+            --error-red: #EF4444;
+            
+            /* Custom App Variables */
+            --bg-gradient-start: #1a1d29;
+            --bg-gradient-end: #16213e;
+            --card-bg: #2d3142;
+            --card-hover-bg: rgba(45, 49, 66, 0.9);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.8);
+            --text-muted: rgba(255, 255, 255, 0.6);
+            --accent-color: #FD8B2C;
+            --primary-color: #17408B;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+            
+            /* Typography */
+            --font-family-base: "FKGroteskNeue", "Geist", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --font-size-xs: 11px;
+            --font-size-sm: 12px;
+            --font-size-base: 16px;
+            --font-size-md: 16px;
+            --font-size-lg: 18px;
+            --font-size-xl: 20px;
+            --font-size-2xl: 24px;
+            --font-size-3xl: 32px;
+            --font-size-4xl: 40px;
+            --font-weight-normal: 400;
+            --font-weight-medium: 500;
+            --font-weight-semibold: 550;
+            --font-weight-bold: 600;
+            
+            /* Spacing */
+            --space-8: 8px;
+            --space-12: 12px;
+            --space-16: 16px;
+            --space-20: 20px;
+            --space-24: 24px;
+            --space-32: 32px;
+            --space-40: 40px;
+            
+            /* Border Radius */
+            --radius-base: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        @font-face {
+            font-family: 'FKGroteskNeue';
+            src: url('https://r2cdn.perplexity.ai/fonts/FKGroteskNeue.woff2') format('woff2');
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family-base);
+            font-size: var(--font-size-base);
+            line-height: 1.6;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: var(--space-20);
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: var(--space-40);
+            padding: var(--space-32) var(--space-20);
+        }
+
+        .header h1 {
+            font-size: var(--font-size-4xl);
+            font-weight: var(--font-weight-bold);
+            color: var(--text-primary);
+            margin-bottom: var(--space-12);
+            letter-spacing: -0.02em;
+        }
+
+        .header .subtitle {
+            font-size: var(--font-size-lg);
+            color: var(--text-secondary);
+            margin-bottom: var(--space-16);
+        }
+
+        .header .date {
+            font-size: var(--font-size-base);
+            color: var(--text-muted);
+            margin-bottom: var(--space-8);
+        }
+
+        .header .cache-status {
+            font-size: var(--font-size-sm);
+            color: var(--accent-color);
+            margin-bottom: var(--space-20);
+        }
+
+        .refresh-btn {
+            background: var(--primary-color);
+            color: var(--text-primary);
+            border: none;
+            padding: var(--space-12) var(--space-24);
+            border-radius: var(--radius-base);
+            font-size: var(--font-size-base);
+            font-weight: var(--font-weight-semibold);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: var(--space-12);
+        }
+
+        .refresh-btn:hover {
+            background: #1a4f9e;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .refresh-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Games List */
+        .games-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-20);
+            margin-bottom: var(--space-40);
+        }
+
+        /* Game Selection Section */
+        .selection-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-24);
+            flex-wrap: wrap;
+            gap: var(--space-12);
+        }
+
+        .selection-controls .btn-group {
+            display: flex;
+            gap: var(--space-12);
+        }
+
+        .selection-controls button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            padding: var(--space-8) var(--space-16);
+            border-radius: var(--radius-base);
+            font-size: var(--font-size-sm);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .selection-controls button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .selection-count {
+            color: var(--text-secondary);
+            font-size: var(--font-size-sm);
+        }
+
+        /* Game Card */
+        .game-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-md);
+            padding: var(--space-24);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .game-card:hover {
+            border-color: var(--accent-color);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .game-card.selected {
+            border-color: var(--accent-color);
+            background: rgba(253, 139, 44, 0.1);
+        }
+
+        .game-card input[type="checkbox"] {
+            position: absolute;
+            top: var(--space-16);
+            right: var(--space-16);
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .game-matchup {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-16);
+            margin-bottom: var(--space-20);
+        }
+
+        .team {
+            flex: 1;
+            text-align: center;
+        }
+
+        .team-abbr {
+            font-size: var(--font-size-3xl);
+            font-weight: var(--font-weight-bold);
+            color: var(--text-primary);
+            margin-bottom: var(--space-8);
+            letter-spacing: -0.01em;
+        }
+
+        .team-name {
+            font-size: var(--font-size-base);
+            color: var(--text-muted);
+            font-weight: var(--font-weight-normal);
+        }
+
+        .vs-separator {
+            font-size: var(--font-size-lg);
+            color: var(--text-muted);
+            font-weight: var(--font-weight-medium);
+            padding: 0 var(--space-12);
+        }
+
+        .game-time {
+            text-align: center;
+            padding-top: var(--space-20);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .time {
+            font-size: var(--font-size-xl);
+            color: var(--accent-color);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        /* Simulation Controls */
+        .simulation-controls {
+            background: var(--card-bg);
+            border-radius: var(--radius-md);
+            padding: var(--space-32);
+            margin: var(--space-40) 0;
+            text-align: center;
+            box-shadow: var(--shadow-md);
+        }
+
+        .simulation-controls h2 {
+            font-size: var(--font-size-2xl);
+            margin-bottom: var(--space-24);
+            color: var(--text-primary);
+        }
+
+        .simulation-controls label {
+            display: block;
+            margin-bottom: var(--space-12);
+            font-size: var(--font-size-base);
+            color: var(--text-secondary);
+        }
+
+        .simulation-controls select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            padding: var(--space-12) var(--space-20);
+            border-radius: var(--radius-base);
+            font-size: var(--font-size-base);
+            margin-bottom: var(--space-24);
+            cursor: pointer;
+            width: 200px;
+        }
+
+        .run-simulation-btn {
+            background: var(--accent-color);
+            color: var(--text-primary);
+            border: none;
+            padding: var(--space-16) var(--space-40);
+            border-radius: var(--radius-base);
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-bold);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(253, 139, 44, 0.4);
+        }
+
+        .run-simulation-btn:hover:not(:disabled) {
+            background: #ff9d3d;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(253, 139, 44, 0.5);
+        }
+
+        .run-simulation-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Progress Section */
+        .progress-section {
+            margin-top: var(--space-24);
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-base);
+            overflow: hidden;
+            margin-bottom: var(--space-12);
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-color), var(--primary-color));
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        .progress-text {
+            color: var(--text-secondary);
+            font-size: var(--font-size-base);
+            margin-bottom: var(--space-12);
+        }
+
+        /* Results Section */
+        .results-section {
+            margin-top: var(--space-40);
+        }
+
+        .result-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-md);
+            padding: var(--space-32);
+            margin-bottom: var(--space-32);
+            box-shadow: var(--shadow-md);
+        }
+
+        .result-card h3 {
+            font-size: var(--font-size-2xl);
+            margin-bottom: var(--space-24);
+            color: var(--text-primary);
+            text-align: center;
+        }
+
+        .win-probability {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-20);
+            font-size: var(--font-size-xl);
+            font-weight: var(--font-weight-semibold);
+        }
+
+        .win-prob-bar {
+            width: 100%;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-base);
+            overflow: hidden;
+            display: flex;
+            margin-bottom: var(--space-24);
+        }
+
+        .win-prob-segment {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-base);
+            font-weight: var(--font-weight-bold);
+            transition: all 0.3s ease;
+        }
+
+        .win-prob-segment.team1 {
+            background: var(--primary-color);
+        }
+
+        .win-prob-segment.team2 {
+            background: var(--nba-red);
+        }
+
+        .score-prediction {
+            text-align: center;
+            font-size: var(--font-size-2xl);
+            font-weight: var(--font-weight-bold);
+            margin-bottom: var(--space-32);
+            color: var(--accent-color);
+        }
+
+        /* Stats Table */
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: var(--space-24);
+        }
+
+        .stats-table th,
+        .stats-table td {
+            padding: var(--space-12) var(--space-16);
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stats-table th {
+            background: rgba(255, 255, 255, 0.05);
+            font-weight: var(--font-weight-semibold);
+            color: var(--text-secondary);
+            font-size: var(--font-size-sm);
+            text-transform: uppercase;
+        }
+
+        .stats-table td {
+            color: var(--text-primary);
+            font-size: var(--font-size-base);
+        }
+
+        .stats-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .stats-table td:first-child {
+            font-weight: var(--font-weight-semibold);
+        }
+
+        /* Player Box Score */
+        .player-box-score {
+            margin-top: var(--space-24);
+        }
+
+        .player-box-score h4 {
+            font-size: var(--font-size-lg);
+            margin-bottom: var(--space-16);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: var(--space-8);
+        }
+
+        .player-box-score h4:hover {
+            color: var(--text-primary);
+        }
+
+        .player-box-score .toggle-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .player-box-score .toggle-icon.expanded {
+            transform: rotate(180deg);
+        }
+
+        .player-stats-container {
+            overflow-x: auto;
+        }
+
+        .export-btn {
+            background: var(--success-green);
+            color: var(--text-primary);
+            border: none;
+            padding: var(--space-12) var(--space-24);
+            border-radius: var(--radius-base);
+            font-size: var(--font-size-base);
+            font-weight: var(--font-weight-semibold);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: var(--space-16);
+        }
+
+        .export-btn:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: var(--space-32) var(--space-20);
+            color: var(--text-muted);
+            font-size: var(--font-size-sm);
+            margin-top: var(--space-40);
+        }
+
+        .footer a {
+            color: var(--accent-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer a:hover {
+            color: var(--text-primary);
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: var(--space-40);
+            color: var(--text-secondary);
+            font-size: var(--font-size-lg);
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid var(--error-red);
+            color: var(--text-primary);
+            padding: var(--space-20);
+            border-radius: var(--radius-base);
+            text-align: center;
+            margin: var(--space-20) 0;
+        }
+
+        .error-message button {
+            background: var(--error-red);
+            color: var(--text-primary);
+            border: none;
+            padding: var(--space-8) var(--space-16);
+            border-radius: var(--radius-base);
+            cursor: pointer;
+            margin-top: var(--space-12);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: var(--space-16);
+            }
+
+            .header h1 {
+                font-size: var(--font-size-3xl);
+            }
+
+            .header .date {
+                font-size: var(--font-size-lg);
+            }
+
+            .game-card {
+                padding: var(--space-20);
+            }
+
+            .team-abbr {
+                font-size: var(--font-size-2xl);
+            }
+
+            .team-name {
+                font-size: var(--font-size-sm);
+            }
+
+            .vs-separator {
+                font-size: var(--font-size-base);
+            }
+
+            .time {
+                font-size: var(--font-size-lg);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .game-matchup {
+                flex-direction: column;
+                gap: var(--space-12);
+            }
+
+            .team {
+                width: 100%;
+            }
+
+            .vs-separator {
+                padding: var(--space-8) 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🏀 Live NBA Game Simulator</h1>
+            <div class="subtitle">Monte Carlo Simulation Engine</div>
+            <div class="date" id="currentDate">Tuesday, November 11, 2025</div>
+            <div class="cache-status" id="cacheStatus"></div>
+            <button class="refresh-btn" id="refreshBtn" onclick="App.handleRefresh()">Refresh Data</button>
+        </header>
+
+        <section class="game-selection">
+            <div class="selection-controls">
+                <div class="btn-group">
+                    <button onclick="App.selectAllGames()">Select All</button>
+                    <button onclick="App.clearAllGames()">Clear All</button>
+                </div>
+                <div class="selection-count" id="selectionCount">0 of 0 games selected</div>
+            </div>
+            <div class="games-list" id="gamesList">
+                <div class="loading">Loading games...</div>
+            </div>
+        </section>
+
+        <section class="simulation-controls" id="simulationControls">
+            <h2>Run Simulation</h2>
+            <label for="iterationsSelect">Number of Simulations:</label>
+            <select id="iterationsSelect">
+                <option value="1000" selected>1,000 iterations</option>
+                <option value="5000">5,000 iterations</option>
+                <option value="10000">10,000 iterations</option>
+            </select>
+            <br>
+            <button class="run-simulation-btn" id="runSimBtn" onclick="App.handleSimulate()" disabled>
+                Run Simulation
+            </button>
+            <div class="progress-section hidden" id="progressSection">
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progressBar" style="width: 0%">0%</div>
+                </div>
+                <div class="progress-text" id="progressText">Completed 0 / 0 simulations</div>
+            </div>
+        </section>
+
+        <section class="results-section" id="resultsSection"></section>
+
+        <footer class="footer">
+            <p>Powered by ESPN API | Simulations are for entertainment purposes only</p>
+            <p style="margin-top: 8px; font-size: 11px;">Note: Due to CORS restrictions, live API data may not be available. Demo data shown for illustration.</p>
+        </footer>
+    </div>
+
+    <script>
+        // ===== NBA GAME SIMULATOR =====
+        // Monte Carlo simulation engine for NBA game predictions
+        // Uses real-time data from ESPN API (when available)
+
+        // ===== GLOBAL STATE (NO localStorage - sandboxed environment) =====
+        const AppState = {
+            games: [],
+            selectedGames: new Set(),
+            cache: new Map(), // In-memory cache
+            cacheTimestamp: null,
+            simulationResults: new Map()
+        };
+
+        // ===== API MODULE =====
+        const NBAAPI = {
+            CORS_PROXY: 'https://api.allorigins.win/get?url=',
+            ESPN_SCOREBOARD: 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard',
+            CACHE_DURATION: 5 * 60 * 1000, // 5 minutes
+            RATE_LIMIT_DELAY: 3000, // 3 seconds
+            lastRequestTime: 0,
+
+            // Rate limiting
+            async waitForRateLimit() {
+                const now = Date.now();
+                const timeSinceLastRequest = now - this.lastRequestTime;
+                if (timeSinceLastRequest < this.RATE_LIMIT_DELAY) {
+                    await new Promise(resolve => setTimeout(resolve, this.RATE_LIMIT_DELAY - timeSinceLastRequest));
+                }
+                this.lastRequestTime = Date.now();
+            },
+
+            // Fetch with retry logic
+            async fetchWithRetry(url, retries = 3) {
+                for (let i = 0; i < retries; i++) {
+                    try {
+                        await this.waitForRateLimit();
+                        const response = await fetch(url);
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        return await response.json();
+                    } catch (error) {
+                        console.error(`Fetch attempt ${i + 1} failed:`, error);
+                        if (i === retries - 1) throw error;
+                        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
+                    }
+                }
+            },
+
+            // Fetch game summary with player names from boxscore
+            async fetchGameWithPlayers(gameId) {
+                const summaryUrl = `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${gameId}`;
+                const proxyUrl = this.CORS_PROXY + encodeURIComponent(summaryUrl);
+                
+                try {
+                    const response = await this.fetchWithRetry(proxyUrl);
+                    const gameData = JSON.parse(response.contents);
+                    
+                    // CRITICAL FIX: Extract REAL PLAYER NAMES from boxscore
+                    if (!gameData.boxscore || !gameData.boxscore.players) {
+                        console.warn('No boxscore data available for game', gameId);
+                        return null;
+                    }
+                    
+                    // boxscore.players[0] = Away team, boxscore.players[1] = Home team
+                    const awayTeamData = gameData.boxscore.players[0];
+                    const homeTeamData = gameData.boxscore.players[1];
+                    
+                    const awayTeam = {
+                        name: awayTeamData.team.displayName,
+                        abbreviation: awayTeamData.team.abbreviation,
+                        id: awayTeamData.team.id,
+                        players: awayTeamData.statistics[0].athletes.map(playerData => ({
+                            id: playerData.athlete.id,
+                            name: playerData.athlete.displayName, // ← REAL PLAYER NAME
+                            position: playerData.athlete.position?.abbreviation || 'N/A',
+                            stats: {
+                                minutes: parseFloat(playerData.stats[0]) || 25.0,
+                                points: parseFloat(playerData.stats[13]) || 15.0,
+                                rebounds: parseFloat(playerData.stats[11]) || 5.0,
+                                assists: parseFloat(playerData.stats[12]) || 3.0,
+                                fieldGoalPct: this.parseFGPct(playerData.stats[2]) || 0.45,
+                                threePointersMade: this.parse3PM(playerData.stats[3]) || 1.5,
+                                blocks: parseFloat(playerData.stats[9]) || 0.5,
+                                steals: parseFloat(playerData.stats[10]) || 0.8,
+                                turnovers: parseFloat(playerData.stats[14]) || 2.0
+                            }
+                        }))
+                    };
+                    
+                    const homeTeam = {
+                        name: homeTeamData.team.displayName,
+                        abbreviation: homeTeamData.team.abbreviation,
+                        id: homeTeamData.team.id,
+                        players: homeTeamData.statistics[0].athletes.map(playerData => ({
+                            id: playerData.athlete.id,
+                            name: playerData.athlete.displayName, // ← REAL PLAYER NAME
+                            position: playerData.athlete.position?.abbreviation || 'N/A',
+                            stats: {
+                                minutes: parseFloat(playerData.stats[0]) || 25.0,
+                                points: parseFloat(playerData.stats[13]) || 15.0,
+                                rebounds: parseFloat(playerData.stats[11]) || 5.0,
+                                assists: parseFloat(playerData.stats[12]) || 3.0,
+                                fieldGoalPct: this.parseFGPct(playerData.stats[2]) || 0.45,
+                                threePointersMade: this.parse3PM(playerData.stats[3]) || 1.5,
+                                blocks: parseFloat(playerData.stats[9]) || 0.5,
+                                steals: parseFloat(playerData.stats[10]) || 0.8,
+                                turnovers: parseFloat(playerData.stats[14]) || 2.0
+                            }
+                        }))
+                    };
+                    
+                    // VALIDATION: Verify real player names were extracted
+                    console.log('=== PLAYER NAME VERIFICATION ===');
+                    console.log('Away Team Players:', awayTeam.players.map(p => p.name));
+                    console.log('Home Team Players:', homeTeam.players.map(p => p.name));
+                    console.log('Expected: Real names like "LeBron James", "Stephen Curry"');
+                    console.log('NOT Expected: Generic labels like "starting guard", "bench forward"');
+                    
+                    return { awayTeam, homeTeam, gameId };
+                    
+                } catch (error) {
+                    console.error('Error fetching game with players:', error);
+                    return null;
+                }
+            },
+            
+            // Parse field goal percentage from "Made/Attempted" format
+            parseFGPct(fgString) {
+                if (!fgString || typeof fgString !== 'string') return 0.45;
+                const parts = fgString.split('/');
+                if (parts.length !== 2) return 0.45;
+                const made = parseFloat(parts[0]);
+                const attempted = parseFloat(parts[1]);
+                if (attempted === 0) return 0.45;
+                return made / attempted;
+            },
+            
+            // Parse three-pointers made from "Made/Attempted" format
+            parse3PM(tpString) {
+                if (!tpString || typeof tpString !== 'string') return 1.5;
+                const parts = tpString.split('/');
+                if (parts.length !== 2) return 1.5;
+                return parseFloat(parts[0]) || 1.5;
+            },
+
+            // Check cache
+            getCachedData(key) {
+                if (!AppState.cache.has(key)) return null;
+                const cached = AppState.cache.get(key);
+                if (Date.now() - cached.timestamp > this.CACHE_DURATION) {
+                    AppState.cache.delete(key);
+                    return null;
+                }
+                return cached.data;
+            },
+
+            // Set cache
+            setCachedData(key, data) {
+                AppState.cache.set(key, {
+                    data: data,
+                    timestamp: Date.now()
+                });
+                AppState.cacheTimestamp = new Date();
+            },
+
+            // Fetch today's games
+            async fetchGames() {
+                const cacheKey = 'games_' + new Date().toDateString();
+                const cached = this.getCachedData(cacheKey);
+                if (cached) {
+                    console.log('Using cached games data');
+                    return cached;
+                }
+
+                try {
+                    const proxyUrl = this.CORS_PROXY + encodeURIComponent(this.ESPN_SCOREBOARD);
+                    const response = await this.fetchWithRetry(proxyUrl);
+                    const data = JSON.parse(response.contents);
+                    
+                    if (!data.events || data.events.length === 0) {
+                        throw new Error('No games found');
+                    }
+
+                    const games = data.events.map(event => ({
+                        id: event.id,
+                        away_team: event.competitions[0].competitors.find(c => c.homeAway === 'away').team.displayName,
+                        away_abbr: event.competitions[0].competitors.find(c => c.homeAway === 'away').team.abbreviation,
+                        away_id: event.competitions[0].competitors.find(c => c.homeAway === 'away').team.id,
+                        home_team: event.competitions[0].competitors.find(c => c.homeAway === 'home').team.displayName,
+                        home_abbr: event.competitions[0].competitors.find(c => c.homeAway === 'home').team.abbreviation,
+                        home_id: event.competitions[0].competitors.find(c => c.homeAway === 'home').team.id,
+                        time: new Date(event.date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }),
+                        datetime: event.date
+                    }));
+
+                    this.setCachedData(cacheKey, games);
+                    return games;
+                } catch (error) {
+                    console.error('Failed to fetch games from API:', error);
+                    // Return demo data as fallback
+                    return this.getDemoGames();
+                }
+            },
+
+            // Demo games fallback
+            getDemoGames() {
+                return [
+                    { id: "1", away_team: "Memphis Grizzlies", away_abbr: "MEM", away_id: "29", home_team: "New York Knicks", home_abbr: "NYK", home_id: "20", time: "7:30 PM ET" },
+                    { id: "2", away_team: "Toronto Raptors", away_abbr: "TOR", away_id: "28", home_team: "Brooklyn Nets", home_abbr: "BKN", home_id: "17", time: "7:30 PM ET" },
+                    { id: "3", away_team: "Boston Celtics", away_abbr: "BOS", away_id: "2", home_team: "Philadelphia 76ers", home_abbr: "PHI", home_id: "20", time: "8:00 PM ET" },
+                    { id: "4", away_team: "Golden State Warriors", away_abbr: "GSW", away_id: "9", home_team: "Oklahoma City Thunder", home_abbr: "OKC", home_id: "25", time: "8:00 PM ET" },
+                    { id: "5", away_team: "Indiana Pacers", away_abbr: "IND", away_id: "11", home_team: "Utah Jazz", home_abbr: "UTA", home_id: "26", time: "9:00 PM ET" },
+                    { id: "6", away_team: "Denver Nuggets", away_abbr: "DEN", away_id: "7", home_team: "Sacramento Kings", home_abbr: "SAC", home_id: "23", time: "11:00 PM ET" }
+                ];
+            }
+        };
+
+        // ===== SIMULATION MODULE =====
+        const Simulator = {
+            // Generate demo player stats (realistic NBA averages) - FALLBACK ONLY
+            generateDemoPlayers(teamName, teamAbbr) {
+                const templates = [
+                    { name: 'Star Guard', mpg: 35, ppg: 26, rpg: 4.5, apg: 7.2, fg: 0.48, tpm: 2.8, bpg: 0.4, spg: 1.3, tpg: 2.8 },
+                    { name: 'Star Forward', mpg: 34, ppg: 24, rpg: 9.2, apg: 3.5, fg: 0.52, tpm: 1.2, bpg: 1.8, spg: 1.1, tpg: 2.2 },
+                    { name: 'Starting Center', mpg: 30, ppg: 18, rpg: 11, apg: 2.1, fg: 0.56, tpm: 0.3, bpg: 2.4, spg: 0.7, tpg: 1.9 },
+                    { name: 'Starting Guard', mpg: 32, ppg: 15, rpg: 3.2, apg: 5.8, fg: 0.45, tpm: 2.1, bpg: 0.3, spg: 1.5, tpg: 2.1 },
+                    { name: 'Role Player 1', mpg: 28, ppg: 12, rpg: 5.5, apg: 2.3, fg: 0.49, tpm: 1.5, bpg: 0.8, spg: 0.9, tpg: 1.4 },
+                    { name: 'Sixth Man', mpg: 24, ppg: 14, rpg: 4.1, apg: 3.2, fg: 0.44, tpm: 2.3, bpg: 0.4, spg: 0.8, tpg: 1.6 },
+                    { name: 'Role Player 2', mpg: 22, ppg: 9, rpg: 6.2, apg: 1.4, fg: 0.51, tpm: 0.8, bpg: 1.2, spg: 0.6, tpg: 1.1 },
+                    { name: 'Bench Guard', mpg: 18, ppg: 8, rpg: 2.1, apg: 3.5, fg: 0.42, tpm: 1.8, bpg: 0.2, spg: 0.7, tpg: 1.3 }
+                ];
+
+                return templates.map((t, i) => ({
+                    id: `${teamAbbr}_P${i + 1}`,
+                    name: `${teamAbbr} ${t.name}`,
+                    team: teamName,
+                    stats: {
+                        minutes: t.mpg,
+                        points: t.ppg,
+                        rebounds: t.rpg,
+                        assists: t.apg,
+                        fieldGoalPct: t.fg,
+                        threePointersMade: t.tpm,
+                        blocks: t.bpg,
+                        steals: t.spg,
+                        turnovers: t.tpg
+                    }
+                }));
+            },
+
+            // Run Monte Carlo simulation
+            async runSimulation(game, iterations, onProgress) {
+                // CRITICAL FIX: Try to fetch REAL player data from ESPN API
+                let awayPlayers, homePlayers;
+                
+                const realData = await NBAAPI.fetchGameWithPlayers(game.id);
+                
+                if (realData && realData.awayTeam && realData.homeTeam) {
+                    // SUCCESS: Use REAL PLAYER NAMES from API
+                    console.log('✓ Using real player data from ESPN API');
+                    awayPlayers = realData.awayTeam.players;
+                    homePlayers = realData.homeTeam.players;
+                } else {
+                    // FALLBACK: Use demo data only if API fails
+                    console.warn('⚠ API failed, using demo player data as fallback');
+                    awayPlayers = this.generateDemoPlayers(game.away_team, game.away_abbr);
+                    homePlayers = this.generateDemoPlayers(game.home_team, game.home_abbr);
+                }
+
+                const results = {
+                    team1Wins: 0,
+                    team2Wins: 0,
+                    team1Scores: [],
+                    team2Scores: [],
+                    team1Stats: { points: [], fgm: [], tpm: [], rebounds: [], assists: [], turnovers: [], blocks: [], steals: [] },
+                    team2Stats: { points: [], fgm: [], tpm: [], rebounds: [], assists: [], turnovers: [], blocks: [], steals: [] },
+                    team1PlayerStats: {},
+                    team2PlayerStats: {}
+                };
+
+                // Initialize player stats trackers
+                awayPlayers.forEach(p => {
+                    results.team1PlayerStats[p.id] = { name: p.name, minutes: [], points: [], rebounds: [], assists: [], fgPct: [], threePointers: [], blocks: [], steals: [], turnovers: [] };
+                });
+                homePlayers.forEach(p => {
+                    results.team2PlayerStats[p.id] = { name: p.name, minutes: [], points: [], rebounds: [], assists: [], fgPct: [], threePointers: [], blocks: [], steals: [], turnovers: [] };
+                });
+
+                // Run simulations
+                for (let i = 0; i < iterations; i++) {
+                    const simResult = this.simulateSingleGame(awayPlayers, homePlayers);
+                    
+                    // Track wins
+                    if (simResult.team1Score > simResult.team2Score) results.team1Wins++;
+                    else results.team2Wins++;
+
+                    // Track scores
+                    results.team1Scores.push(simResult.team1Score);
+                    results.team2Scores.push(simResult.team2Score);
+
+                    // Track team stats
+                    results.team1Stats.points.push(simResult.team1Score);
+                    results.team1Stats.fgm.push(simResult.team1TeamStats.fgm);
+                    results.team1Stats.tpm.push(simResult.team1TeamStats.tpm);
+                    results.team1Stats.rebounds.push(simResult.team1TeamStats.rebounds);
+                    results.team1Stats.assists.push(simResult.team1TeamStats.assists);
+                    results.team1Stats.turnovers.push(simResult.team1TeamStats.turnovers);
+                    results.team1Stats.blocks.push(simResult.team1TeamStats.blocks);
+                    results.team1Stats.steals.push(simResult.team1TeamStats.steals);
+
+                    results.team2Stats.points.push(simResult.team2Score);
+                    results.team2Stats.fgm.push(simResult.team2TeamStats.fgm);
+                    results.team2Stats.tpm.push(simResult.team2TeamStats.tpm);
+                    results.team2Stats.rebounds.push(simResult.team2TeamStats.rebounds);
+                    results.team2Stats.assists.push(simResult.team2TeamStats.assists);
+                    results.team2Stats.turnovers.push(simResult.team2TeamStats.turnovers);
+                    results.team2Stats.blocks.push(simResult.team2TeamStats.blocks);
+                    results.team2Stats.steals.push(simResult.team2TeamStats.steals);
+
+                    // Track player stats
+                    Object.keys(simResult.team1PlayerStats).forEach(playerId => {
+                        const stats = simResult.team1PlayerStats[playerId];
+                        results.team1PlayerStats[playerId].minutes.push(stats.minutes);
+                        results.team1PlayerStats[playerId].points.push(stats.points);
+                        results.team1PlayerStats[playerId].rebounds.push(stats.rebounds);
+                        results.team1PlayerStats[playerId].assists.push(stats.assists);
+                        results.team1PlayerStats[playerId].fgPct.push(stats.fgPct);
+                        results.team1PlayerStats[playerId].threePointers.push(stats.threePointers);
+                        results.team1PlayerStats[playerId].blocks.push(stats.blocks);
+                        results.team1PlayerStats[playerId].steals.push(stats.steals);
+                        results.team1PlayerStats[playerId].turnovers.push(stats.turnovers);
+                    });
+
+                    Object.keys(simResult.team2PlayerStats).forEach(playerId => {
+                        const stats = simResult.team2PlayerStats[playerId];
+                        results.team2PlayerStats[playerId].minutes.push(stats.minutes);
+                        results.team2PlayerStats[playerId].points.push(stats.points);
+                        results.team2PlayerStats[playerId].rebounds.push(stats.rebounds);
+                        results.team2PlayerStats[playerId].assists.push(stats.assists);
+                        results.team2PlayerStats[playerId].fgPct.push(stats.fgPct);
+                        results.team2PlayerStats[playerId].threePointers.push(stats.threePointers);
+                        results.team2PlayerStats[playerId].blocks.push(stats.blocks);
+                        results.team2PlayerStats[playerId].steals.push(stats.steals);
+                        results.team2PlayerStats[playerId].turnovers.push(stats.turnovers);
+                    });
+
+                    // Update progress every 50 iterations
+                    if (i % 50 === 0 || i === iterations - 1) {
+                        if (onProgress) onProgress(i + 1, iterations);
+                        // Allow UI to update
+                        await new Promise(resolve => setTimeout(resolve, 0));
+                    }
+                }
+
+                return this.aggregateResults(results, iterations, game);
+            },
+
+            // Simulate a single game
+            simulateSingleGame(team1Players, team2Players) {
+                let team1Score = 0;
+                let team2Score = 0;
+                const team1Stats = { fgm: 0, tpm: 0, rebounds: 0, assists: 0, turnovers: 0, blocks: 0, steals: 0 };
+                const team2Stats = { fgm: 0, tpm: 0, rebounds: 0, assists: 0, turnovers: 0, blocks: 0, steals: 0 };
+                const team1PlayerStats = {};
+                const team2PlayerStats = {};
+
+                // Simulate Team 1 players
+                team1Players.forEach(player => {
+                    const variance = 0.85 + Math.random() * 0.3; // ±15% variance
+                    const points = Math.max(0, player.stats.points * variance);
+                    const rebounds = Math.max(0, player.stats.rebounds * variance);
+                    const assists = Math.max(0, player.stats.assists * variance);
+                    const threePointers = Math.max(0, player.stats.threePointersMade * variance);
+                    const blocks = Math.max(0, player.stats.blocks * variance);
+                    const steals = Math.max(0, player.stats.steals * variance);
+                    const turnovers = Math.max(0, player.stats.turnovers * variance);
+                    const fgm = Math.round(points / 2.2);
+
+                    team1Score += points;
+                    team1Stats.fgm += fgm;
+                    team1Stats.tpm += threePointers;
+                    team1Stats.rebounds += rebounds;
+                    team1Stats.assists += assists;
+                    team1Stats.turnovers += turnovers;
+                    team1Stats.blocks += blocks;
+                    team1Stats.steals += steals;
+
+                    team1PlayerStats[player.id] = {
+                        name: player.name, // ← STORE REAL PLAYER NAME
+                        minutes: player.stats.minutes * variance,
+                        points: points,
+                        rebounds: rebounds,
+                        assists: assists,
+                        fgPct: player.stats.fieldGoalPct,
+                        threePointers: threePointers,
+                        blocks: blocks,
+                        steals: steals,
+                        turnovers: turnovers
+                    };
+                });
+
+                // Simulate Team 2 players
+                team2Players.forEach(player => {
+                    const variance = 0.85 + Math.random() * 0.3;
+                    const points = Math.max(0, player.stats.points * variance);
+                    const rebounds = Math.max(0, player.stats.rebounds * variance);
+                    const assists = Math.max(0, player.stats.assists * variance);
+                    const threePointers = Math.max(0, player.stats.threePointersMade * variance);
+                    const blocks = Math.max(0, player.stats.blocks * variance);
+                    const steals = Math.max(0, player.stats.steals * variance);
+                    const turnovers = Math.max(0, player.stats.turnovers * variance);
+                    const fgm = Math.round(points / 2.2);
+
+                    team2Score += points;
+                    team2Stats.fgm += fgm;
+                    team2Stats.tpm += threePointers;
+                    team2Stats.rebounds += rebounds;
+                    team2Stats.assists += assists;
+                    team2Stats.turnovers += turnovers;
+                    team2Stats.blocks += blocks;
+                    team2Stats.steals += steals;
+
+                    team2PlayerStats[player.id] = {
+                        name: player.name, // ← STORE REAL PLAYER NAME
+                        minutes: player.stats.minutes * variance,
+                        points: points,
+                        rebounds: rebounds,
+                        assists: assists,
+                        fgPct: player.stats.fieldGoalPct,
+                        threePointers: threePointers,
+                        blocks: blocks,
+                        steals: steals,
+                        turnovers: turnovers
+                    };
+                });
+
+                return {
+                    team1Score: Math.round(team1Score),
+                    team2Score: Math.round(team2Score),
+                    team1TeamStats: team1Stats,
+                    team2TeamStats: team2Stats,
+                    team1PlayerStats: team1PlayerStats,
+                    team2PlayerStats: team2PlayerStats
+                };
+            },
+
+            // Aggregate all simulation results
+            aggregateResults(results, iterations, game) {
+                const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
+
+                // CRITICAL: Preserve real player names throughout aggregation
+                const team1PlayerStats = Object.keys(results.team1PlayerStats).map(playerId => {
+                    const playerData = results.team1PlayerStats[playerId];
+                    return {
+                        name: playerData.name, // ← REAL PLAYER NAME from API
+                        minutes: avg(playerData.minutes).toFixed(1),
+                        points: avg(playerData.points).toFixed(1),
+                        rebounds: avg(playerData.rebounds).toFixed(1),
+                        assists: avg(playerData.assists).toFixed(1),
+                        fgPct: (avg(playerData.fgPct) * 100).toFixed(1),
+                        threePointers: avg(playerData.threePointers).toFixed(1),
+                        blocks: avg(playerData.blocks).toFixed(1),
+                        steals: avg(playerData.steals).toFixed(1),
+                        turnovers: avg(playerData.turnovers).toFixed(1)
+                    };
+                }).sort((a, b) => parseFloat(b.minutes) - parseFloat(a.minutes));
+                
+                const team2PlayerStats = Object.keys(results.team2PlayerStats).map(playerId => {
+                    const playerData = results.team2PlayerStats[playerId];
+                    return {
+                        name: playerData.name, // ← REAL PLAYER NAME from API
+                        minutes: avg(playerData.minutes).toFixed(1),
+                        points: avg(playerData.points).toFixed(1),
+                        rebounds: avg(playerData.rebounds).toFixed(1),
+                        assists: avg(playerData.assists).toFixed(1),
+                        fgPct: (avg(playerData.fgPct) * 100).toFixed(1),
+                        threePointers: avg(playerData.threePointers).toFixed(1),
+                        blocks: avg(playerData.blocks).toFixed(1),
+                        steals: avg(playerData.steals).toFixed(1),
+                        turnovers: avg(playerData.turnovers).toFixed(1)
+                    };
+                }).sort((a, b) => parseFloat(b.minutes) - parseFloat(a.minutes));
+                
+                // Validation: Check for generic placeholders
+                team1PlayerStats.forEach(player => {
+                    console.assert(
+                        !player.name.toLowerCase().includes('starting') && 
+                        !player.name.toLowerCase().includes('bench') &&
+                        !player.name.toLowerCase().includes('role player'),
+                        'ERROR: Generic label detected instead of real player name:',
+                        player.name
+                    );
+                });
+
+                return {
+                    game: game,
+                    team1WinPct: (results.team1Wins / iterations * 100).toFixed(1),
+                    team2WinPct: (results.team2Wins / iterations * 100).toFixed(1),
+                    team1AvgScore: avg(results.team1Scores).toFixed(1),
+                    team2AvgScore: avg(results.team2Scores).toFixed(1),
+                    team1Stats: {
+                        points: avg(results.team1Stats.points).toFixed(1),
+                        fgm: avg(results.team1Stats.fgm).toFixed(1),
+                        tpm: avg(results.team1Stats.tpm).toFixed(1),
+                        rebounds: avg(results.team1Stats.rebounds).toFixed(1),
+                        assists: avg(results.team1Stats.assists).toFixed(1),
+                        turnovers: avg(results.team1Stats.turnovers).toFixed(1),
+                        blocks: avg(results.team1Stats.blocks).toFixed(1),
+                        steals: avg(results.team1Stats.steals).toFixed(1)
+                    },
+                    team2Stats: {
+                        points: avg(results.team2Stats.points).toFixed(1),
+                        fgm: avg(results.team2Stats.fgm).toFixed(1),
+                        tpm: avg(results.team2Stats.tpm).toFixed(1),
+                        rebounds: avg(results.team2Stats.rebounds).toFixed(1),
+                        assists: avg(results.team2Stats.assists).toFixed(1),
+                        turnovers: avg(results.team2Stats.turnovers).toFixed(1),
+                        blocks: avg(results.team2Stats.blocks).toFixed(1),
+                        steals: avg(results.team2Stats.steals).toFixed(1)
+                    },
+                    team1PlayerStats: team1PlayerStats,
+                    team2PlayerStats: team2PlayerStats
+                };
+            }
+        };
+
+        // ===== UI MODULE =====
+        const UI = {
+            renderGames(games) {
+                const gamesListElement = document.getElementById('gamesList');
+                
+                if (games.length === 0) {
+                    gamesListElement.innerHTML = '<div class="loading">No games scheduled for today</div>';
+                    return;
+                }
+
+                gamesListElement.innerHTML = '';
+
+                games.forEach(game => {
+                    const gameCard = this.createGameCard(game);
+                    gamesListElement.appendChild(gameCard);
+                });
+
+                this.updateSelectionCount();
+            },
+
+            createGameCard(game) {
+                const card = document.createElement('div');
+                card.className = 'game-card';
+                card.dataset.gameId = game.id;
+                
+                card.innerHTML = `
+                    <input type="checkbox" id="game_${game.id}" data-game-id="${game.id}">
+                    <div class="game-matchup">
+                        <div class="team away-team">
+                            <div class="team-abbr">${game.away_abbr}</div>
+                            <div class="team-name">${game.away_team}</div>
+                        </div>
+                        <div class="vs-separator">@</div>
+                        <div class="team home-team">
+                            <div class="team-abbr">${game.home_abbr}</div>
+                            <div class="team-name">${game.home_team}</div>
+                        </div>
+                    </div>
+                    <div class="game-time">
+                        <div class="time">${game.time}</div>
+                    </div>
+                `;
+
+                // Add click handler for card
+                card.addEventListener('click', (e) => {
+                    if (e.target.type !== 'checkbox') {
+                        const checkbox = card.querySelector('input[type="checkbox"]');
+                        checkbox.checked = !checkbox.checked;
+                        checkbox.dispatchEvent(new Event('change'));
+                    }
+                });
+
+                // Add change handler for checkbox
+                const checkbox = card.querySelector('input[type="checkbox"]');
+                checkbox.addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    if (e.target.checked) {
+                        card.classList.add('selected');
+                        AppState.selectedGames.add(game.id);
+                    } else {
+                        card.classList.remove('selected');
+                        AppState.selectedGames.delete(game.id);
+                    }
+                    this.updateSelectionCount();
+                    this.updateSimulateButton();
+                });
+                
+                return card;
+            },
+
+            updateSelectionCount() {
+                const count = AppState.selectedGames.size;
+                const total = AppState.games.length;
+                document.getElementById('selectionCount').textContent = `${count} of ${total} games selected`;
+            },
+
+            updateSimulateButton() {
+                const btn = document.getElementById('runSimBtn');
+                btn.disabled = AppState.selectedGames.size === 0;
+            },
+
+            showLoading(message) {
+                const gamesListElement = document.getElementById('gamesList');
+                gamesListElement.innerHTML = `<div class="loading">${message}</div>`;
+            },
+
+            showError(message, onRetry) {
+                const gamesListElement = document.getElementById('gamesList');
+                gamesListElement.innerHTML = `
+                    <div class="error-message">
+                        <p>${message}</p>
+                        ${onRetry ? '<button onclick="App.handleRefresh()">Retry</button>' : ''}
+                    </div>
+                `;
+            },
+
+            updateProgress(current, total) {
+                const progressBar = document.getElementById('progressBar');
+                const progressText = document.getElementById('progressText');
+                const percentage = Math.round((current / total) * 100);
+                
+                progressBar.style.width = percentage + '%';
+                progressBar.textContent = percentage + '%';
+                progressText.textContent = `Completed ${current.toLocaleString()} / ${total.toLocaleString()} simulations`;
+            },
+
+            showProgress() {
+                document.getElementById('progressSection').classList.remove('hidden');
+            },
+
+            hideProgress() {
+                document.getElementById('progressSection').classList.add('hidden');
+            },
+
+            renderResults(results) {
+                const resultsSection = document.getElementById('resultsSection');
+                resultsSection.innerHTML = '';
+
+                results.forEach(result => {
+                    const resultCard = this.createResultCard(result);
+                    resultsSection.appendChild(resultCard);
+                });
+
+                // Scroll to results
+                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            },
+
+            createResultCard(result) {
+                const card = document.createElement('div');
+                card.className = 'result-card';
+                
+                const game = result.game;
+                card.innerHTML = `
+                    <h3>${game.away_abbr} @ ${game.home_abbr}</h3>
+                    
+                    <div class="win-probability">
+                        <span>${game.away_abbr} ${result.team1WinPct}%</span>
+                        <span>${game.home_abbr} ${result.team2WinPct}%</span>
+                    </div>
+                    
+                    <div class="win-prob-bar">
+                        <div class="win-prob-segment team1" style="width: ${result.team1WinPct}%">${result.team1WinPct}%</div>
+                        <div class="win-prob-segment team2" style="width: ${result.team2WinPct}%">${result.team2WinPct}%</div>
+                    </div>
+                    
+                    <div class="score-prediction">
+                        Average Final Score: ${game.away_abbr} ${result.team1AvgScore} - ${game.home_abbr} ${result.team2AvgScore}
+                    </div>
+                    
+                    <h4 style="margin-bottom: 16px; color: var(--text-secondary);">Team Statistics</h4>
+                    <table class="stats-table">
+                        <thead>
+                            <tr>
+                                <th>Stat</th>
+                                <th>${game.away_abbr}</th>
+                                <th>${game.home_abbr}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Points</td>
+                                <td>${result.team1Stats.points}</td>
+                                <td>${result.team2Stats.points}</td>
+                            </tr>
+                            <tr>
+                                <td>FGM</td>
+                                <td>${result.team1Stats.fgm}</td>
+                                <td>${result.team2Stats.fgm}</td>
+                            </tr>
+                            <tr>
+                                <td>3PM</td>
+                                <td>${result.team1Stats.tpm}</td>
+                                <td>${result.team2Stats.tpm}</td>
+                            </tr>
+                            <tr>
+                                <td>Rebounds</td>
+                                <td>${result.team1Stats.rebounds}</td>
+                                <td>${result.team2Stats.rebounds}</td>
+                            </tr>
+                            <tr>
+                                <td>Assists</td>
+                                <td>${result.team1Stats.assists}</td>
+                                <td>${result.team2Stats.assists}</td>
+                            </tr>
+                            <tr>
+                                <td>Turnovers</td>
+                                <td>${result.team1Stats.turnovers}</td>
+                                <td>${result.team2Stats.turnovers}</td>
+                            </tr>
+                            <tr>
+                                <td>Blocks</td>
+                                <td>${result.team1Stats.blocks}</td>
+                                <td>${result.team2Stats.blocks}</td>
+                            </tr>
+                            <tr>
+                                <td>Steals</td>
+                                <td>${result.team1Stats.steals}</td>
+                                <td>${result.team2Stats.steals}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="player-box-score">
+                        <h4 onclick="UI.togglePlayerStats('${game.id}_away')">
+                            <span class="toggle-icon" id="icon_${game.id}_away">▼</span>
+                            ${game.away_team} Player Stats
+                        </h4>
+                        <div id="${game.id}_away" class="player-stats-container">
+                            ${this.createPlayerStatsTable(result.team1PlayerStats)}
+                        </div>
+                    </div>
+                    
+                    <div class="player-box-score">
+                        <h4 onclick="UI.togglePlayerStats('${game.id}_home')">
+                            <span class="toggle-icon" id="icon_${game.id}_home">▼</span>
+                            ${game.home_team} Player Stats
+                        </h4>
+                        <div id="${game.id}_home" class="player-stats-container">
+                            ${this.createPlayerStatsTable(result.team2PlayerStats)}
+                        </div>
+                    </div>
+                    
+                    <button class="export-btn" onclick="UI.exportToCSV(${JSON.stringify(result).replace(/"/g, '&quot;')})">Export to CSV</button>
+                `;
+                
+                return card;
+            },
+
+            createPlayerStatsTable(playerStats) {
+                // CRITICAL: Display REAL PLAYER NAMES in box score table
+                return `
+                    <table class="stats-table">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th>MIN</th>
+                                <th>PTS</th>
+                                <th>REB</th>
+                                <th>AST</th>
+                                <th>FG%</th>
+                                <th>3PM</th>
+                                <th>BLK</th>
+                                <th>STL</th>
+                                <th>TO</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${playerStats.map(player => {
+                                // Validate: ensure we're not showing generic labels
+                                const hasGenericLabel = 
+                                    player.name.toLowerCase().includes('starting') ||
+                                    player.name.toLowerCase().includes('bench') ||
+                                    player.name.toLowerCase().includes('role player');
+                                
+                                if (hasGenericLabel) {
+                                    console.error('⚠ WARNING: Generic player label detected:', player.name);
+                                }
+                                
+                                return `
+                                    <tr>
+                                        <td style="font-weight: var(--font-weight-semibold);">${player.name}</td>
+                                        <td>${player.minutes}</td>
+                                        <td>${player.points}</td>
+                                        <td>${player.rebounds}</td>
+                                        <td>${player.assists}</td>
+                                        <td>${player.fgPct}%</td>
+                                        <td>${player.threePointers}</td>
+                                        <td>${player.blocks}</td>
+                                        <td>${player.steals}</td>
+                                        <td>${player.turnovers}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                `;
+            },
+
+            togglePlayerStats(id) {
+                const container = document.getElementById(id);
+                const icon = document.getElementById('icon_' + id);
+                
+                if (container.classList.contains('hidden')) {
+                    container.classList.remove('hidden');
+                    icon.classList.add('expanded');
+                } else {
+                    container.classList.add('hidden');
+                    icon.classList.remove('expanded');
+                }
+            },
+
+            exportToCSV(result) {
+                const game = result.game;
+                let csv = 'Game,Team,Win_Probability,Avg_Score,FGM,3PM,Rebounds,Assists,Turnovers,Blocks,Steals\n';
+                csv += `${game.away_abbr} vs ${game.home_abbr},${game.away_abbr},${result.team1WinPct}%,${result.team1AvgScore},${result.team1Stats.fgm},${result.team1Stats.tpm},${result.team1Stats.rebounds},${result.team1Stats.assists},${result.team1Stats.turnovers},${result.team1Stats.blocks},${result.team1Stats.steals}\n`;
+                csv += `${game.away_abbr} vs ${game.home_abbr},${game.home_abbr},${result.team2WinPct}%,${result.team2AvgScore},${result.team2Stats.fgm},${result.team2Stats.tpm},${result.team2Stats.rebounds},${result.team2Stats.assists},${result.team2Stats.turnovers},${result.team2Stats.blocks},${result.team2Stats.steals}\n`;
+                
+                csv += '\nPlayer_Stats\n';
+                csv += 'Team,Player,Minutes,Points,Rebounds,Assists,FG%,3PM,Blocks,Steals,Turnovers\n';
+                
+                // CRITICAL: Export REAL PLAYER NAMES to CSV
+                result.team1PlayerStats.forEach(player => {
+                    // Escape commas in player names for proper CSV formatting
+                    const playerName = player.name.replace(/,/g, ';');
+                    csv += `${game.away_abbr},${playerName},${player.minutes},${player.points},${player.rebounds},${player.assists},${player.fgPct}%,${player.threePointers},${player.blocks},${player.steals},${player.turnovers}\n`;
+                });
+                
+                result.team2PlayerStats.forEach(player => {
+                    // Escape commas in player names for proper CSV formatting
+                    const playerName = player.name.replace(/,/g, ';');
+                    csv += `${game.home_abbr},${playerName},${player.minutes},${player.points},${player.rebounds},${player.assists},${player.fgPct}%,${player.threePointers},${player.blocks},${player.steals},${player.turnovers}\n`;
+                });
+                
+                console.log('CSV Export - Player names verified:', {
+                    awayTeamPlayers: result.team1PlayerStats.map(p => p.name),
+                    homeTeamPlayers: result.team2PlayerStats.map(p => p.name)
+                });
+                
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `nba_simulation_${game.away_abbr}_vs_${game.home_abbr}.csv`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            },
+
+            updateCacheStatus() {
+                const statusEl = document.getElementById('cacheStatus');
+                if (AppState.cacheTimestamp) {
+                    const timeStr = AppState.cacheTimestamp.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                    statusEl.textContent = `Last updated: ${timeStr}`;
+                } else {
+                    statusEl.textContent = '';
+                }
+            }
+        };
+
+        // ===== MAIN APP =====
+        const App = {
+            async init() {
+                console.log('🏀 NBA Game Simulator initialized');
+                
+                // Set current date
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                document.getElementById('currentDate').textContent = dateStr;
+                
+                // Load games
+                await this.loadGames();
+            },
+
+            async loadGames() {
+                UI.showLoading('Fetching today\'s NBA games...');
+                document.getElementById('refreshBtn').disabled = true;
+                
+                try {
+                    AppState.games = await NBAAPI.fetchGames();
+                    UI.renderGames(AppState.games);
+                    UI.updateCacheStatus();
+                } catch (error) {
+                    console.error('Error loading games:', error);
+                    UI.showError('Unable to fetch NBA games. Please check your connection and try again.', true);
+                } finally {
+                    document.getElementById('refreshBtn').disabled = false;
+                }
+            },
+
+            async handleRefresh() {
+                // Clear cache
+                AppState.cache.clear();
+                AppState.cacheTimestamp = null;
+                await this.loadGames();
+            },
+
+            selectAllGames() {
+                document.querySelectorAll('.game-card input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.checked = true;
+                    checkbox.dispatchEvent(new Event('change'));
+                });
+            },
+
+            clearAllGames() {
+                document.querySelectorAll('.game-card input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.checked = false;
+                    checkbox.dispatchEvent(new Event('change'));
+                });
+            },
+
+            async handleSimulate() {
+                const iterations = parseInt(document.getElementById('iterationsSelect').value);
+                const selectedGames = AppState.games.filter(g => AppState.selectedGames.has(g.id));
+                
+                if (selectedGames.length === 0) return;
+
+                // Disable button and show progress
+                const btn = document.getElementById('runSimBtn');
+                btn.disabled = true;
+                btn.textContent = 'Simulating...';
+                UI.showProgress();
+
+                const results = [];
+
+                try {
+                    for (const game of selectedGames) {
+                        const result = await Simulator.runSimulation(
+                            game,
+                            iterations,
+                            (current, total) => UI.updateProgress(current, total)
+                        );
+                        results.push(result);
+                        AppState.simulationResults.set(game.id, result);
+                    }
+
+                    UI.renderResults(results);
+                } catch (error) {
+                    console.error('Simulation error:', error);
+                    alert('An error occurred during simulation. Please try again.');
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'Run Simulation';
+                    UI.hideProgress();
+                    UI.updateSimulateButton();
+                }
+            }
+        };
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => App.init());
+        } else {
+            App.init();
+        }
+    </script>
+</body>
+</html>
