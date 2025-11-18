@@ -2,6 +2,7 @@
 let selectedGames = [];
 let allGames = [];  // Store full game objects
 let currentResults = null;
+let gameRostersCache = {};  // Cache rosters for selected games
 
 // Initialize app on page load
 document.addEventListener('DOMContentLoaded', () => {
@@ -85,13 +86,29 @@ function createGameCard(game, index) {
 }
 
 // Toggle game selection
-function toggleGame(checkbox) {
-    const gameId = checkbox.dataset.gameId;
+async function toggleGame(checkbox) {    const gameId = checkbox.dataset.gameId;
+                                         const game = allGames.find(g => g.id === gameId);
     
     if (checkbox.checked) {
         selectedGames.push(gameId);
+
+                // Fetch and cache rosters immediately when game is selected
+        if (!gameRostersCache[gameId] && game) {
+            try {
+                console.log('Fetching rosters for game:', gameId);
+                const rosters = await fetchGameRosters(game);
+                gameRostersCache[gameId] = rosters;
+                displayRosters(gameId, rosters);
+            } catch (error) {
+                console.error('Error fetching rosters:', error);
+                showError('Failed to load rosters. Please try again.');
+            }
+        } else if (gameRostersCache[gameId]) {
+            displayRosters(gameId, gameRostersCache[gameId]);
+        }
     } else {
         selectedGames = selectedGames.filter(id => id !== gameId);
+                clearRosterDisplay();
     }
     
     console.log(`Selected games: ${selectedGames.length}`);
@@ -117,10 +134,9 @@ async function runSimulation() {
     try {
         // Fetch game data and rosters
         const progressText = document.getElementById('progressText');
-        progressText.textContent = 'Fetching player rosters...';
-        
-        const gameData = await fetchGameRoster(sallGames.find(g => g.id === selectedGames[0]));
-        
+        // Use cached rosters from game selection
+        const gameId = selectedGames[0];
+        const gameData = gameRostersCache[gameId];        
         if (!gameData) {
             showError('Could not load roster data. Please try again.');
             return;
@@ -338,5 +354,60 @@ function formatGameTime(timestamp) {
     if (!timestamp) return 'Time TBD';
     const date = new Date(timestamp);
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+// Display rosters in UI
+function displayRosters(gameId, rosters) {
+    const game = allGames.find(g => g.id === gameId);
+    if (!game || !rosters) return;
+
+    const rosterContainer = document.getElementById('rosterDisplay');
+    if (!rosterContainer) {
+        // Create roster display container if it doesn't exist
+        const container = document.createElement('div');
+        container.id = 'rosterDisplay';
+        container.style.marginTop = '20px';
+        container.style.padding = '15px';
+        container.style.backgroundColor = '#f5f5f5';
+        container.style.borderRadius = '8px';
+        document.getElementById('gamesContainer').parentElement.appendChild(container);
+    }
+
+    const displayContainer = document.getElementById('rosterDisplay');
+    displayContainer.innerHTML = `
+        <h3 style="margin-top: 0;">Game Rosters: ${game.awayTeam} @ ${game.homeTeam}</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+                <h4>${game.awayTeam}</h4>
+                <ul style="list-style: none; padding: 0;">
+                    ${rosters.away.map(player => `
+                        <li style="padding: 5px 0; border-bottom: 1px solid #ddd;">
+                            <strong>${player.name}</strong> - ${player.position}
+                            ${player.injuryStatus ? `<span style="color: red;"> (${player.injuryStatus})</span>` : ''}
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>
+            <div>
+                <h4>${game.homeTeam}</h4>
+                <ul style="list-style: none; padding: 0;">
+                    ${rosters.home.map(player => `
+                        <li style="padding: 5px 0; border-bottom: 1px solid #ddd;">
+                            <strong>${player.name}</strong> - ${player.position}
+                            ${player.injuryStatus ? `<span style="color: red;"> (${player.injuryStatus})</span>` : ''}
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>
+        </div>
+    `;
+}
+
+// Clear roster display
+function clearRosterDisplay() {
+    const rosterContainer = document.getElementById('rosterDisplay');
+    if (rosterContainer) {
+        rosterContainer.innerHTML = '';
+    }
 }
 
