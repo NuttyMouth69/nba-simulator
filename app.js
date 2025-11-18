@@ -6,17 +6,24 @@ let currentResults = null;
 document.addEventListener('DOMContentLoaded', () => {
     console.log('App initialized');
     loadTodaysGames();
+        
+    // Initialize date picker with today's date
+    const gameDateInput = document.getElementById('gameDate');
+    const today = new Date().toISOString().split('T')[0];
+    gameDateInput.value = today;
+    gameDateInput.max = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // Max 7 days ahead
     
     // Event listeners
     document.getElementById('refreshBtn').addEventListener('click', loadTodaysGames);
     document.getElementById('runSimBtn').addEventListener('click', runSimulation);
     document.getElementById('exportBtn').addEventListener('click', exportResults);
+        gameDateInput.addEventListener('change', loadTodaysGames);
 });
 
 // Load today's NBA games
 async function loadTodaysGames() {
-    console.log('Loading today\'s NBA games...');
-    
+    const selectedDate = document.getElementById('gameDate')?.value || new Date().toISOString().split('T')[0];
+    console.log(`Loading NBA games for ${selectedDate}...`);    
     const loadingDiv = document.getElementById('loadingGames');
     const gamesContainer = document.getElementById('gamesContainer');
     
@@ -25,8 +32,10 @@ async function loadTodaysGames() {
     selectedGames = [];
     
     try {
-        const games = await fetchNBAGames();
-        
+        // Get selected date from date picker
+        const gameDateInput = document.getElementById('gameDate');
+        const selectedDate = gameDateInput.value.replace(/-/g, ''); // Convert YYYY-MM-DD to YYYYMMDD
+        const games = await fetchNBAGames(selectedDate);        
         if (!games || games.length === 0) {
             showError('No games available for today. Try selecting a different date.');
             loadingDiv.style.display = 'none';
