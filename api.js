@@ -1,5 +1,8 @@
 // API fetching functions
 
+// Base URL for the proxy server
+const PROXY_BASE_URL = 'http://localhost:5000';
+
 // Fetch NBA games for a specific date
 async function fetchNBAGames(date = null) {
     try {
@@ -14,30 +17,28 @@ async function fetchNBAGames(date = null) {
             dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
         }
         
-        const url = `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${dateStr}`;
+        console.log(`Fetching games from NBA.com API via proxy for date ${dateStr}...`);
         
-        console.log(`Fetching games from ESPN for date ${dateStr}...`);
-        
-        const response = await fetch(url);
+        const response = await fetch(`${PROXY_BASE_URL}/api/scoreboard`);
         if (!response.ok) throw new Error('API Error');
         
-        const scoreboard = await response.json();
+        const data = await response.json();
         
-        // Check if events exist and is an array
-        if (!scoreboard.events || !Array.isArray(scoreboard.events) || scoreboard.events.length === 0) {
+        // Check if scoreboard exists
+        if (!data.scoreboard || !data.scoreboard.games || data.scoreboard.games.length === 0) {
             console.log('No games found in API response');
             return [];
         }
         
         // Extract games with team IDs
-        const games = scoreboard.events.map(event => ({
-            id: event.id,
-            name: event.name,
-            startTime: event.date,
-            homeTeam: event.competitions[0].competitors.find(c => c.homeAway === 'home').team.displayName,
-            awayTeam: event.competitions[0].competitors.find(c => c.homeAway === 'away').team.displayName,
-            homeTeamId: event.competitions[0].competitors.find(c => c.homeAway === 'home').team.id,
-            awayTeamId: event.competitions[0].competitors.find(c => c.homeAway === 'away').team.id
+        const games = data.scoreboard.games.map(game => ({
+            id: game.gameId,
+            name: `${game.awayTeam.teamName} @ ${game.homeTeam.teamName}`,
+            startTime: game.gameTimeUTC,
+            homeTeam: game.homeTeam.teamName,
+            awayTeam: game.awayTeam.teamName,
+            homeTeamId: game.homeTeam.teamId,
+            awayTeamId: game.awayTeam.teamId
         }));
         
         console.log(`Fetched ${games.length} games`);
@@ -54,10 +55,10 @@ async function fetchGameRosters(game) {
     try {
         console.log(`Fetching rosters for ${game.awayTeam} @ ${game.homeTeam}...`);
         
-        // Fetch both team rosters
+        // Fetch both team rosters via proxy
         const [homeRosterResponse, awayRosterResponse] = await Promise.all([
-            fetch(`https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/${game.homeTeamId}/roster`),
-            fetch(`https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/${game.awayTeamId}/roster`)
+            fetch(`${PROXY_BASE_URL}/api/team/roster/${game.homeTeamId}`),
+            fetch(`${PROXY_BASE_URL}/api/team/roster/${game.awayTeamId}`)
         ]);
         
         if (!homeRosterResponse.ok || !awayRosterResponse.ok) {
@@ -68,16 +69,16 @@ async function fetchGameRosters(game) {
         const awayRosterData = await awayRosterResponse.json();
         
         // Extract player data from rosters
-        const homePlayers = homeRosterData.athletes.slice(0, 10).map(athlete => ({
-            name: athlete.displayName,
-            position: athlete.position?.abbreviation || 'N/A',
-            injuryStatus: athlete.injuries && athlete.injuries.length > 0 ? athlete.injuries[0].status : null
+        const homePlayers = homeRosterData.roster.slice(0, 10).map(player => ({
+            name: player.name,
+            position: player.position || 'N/A',
+            injuryStatus: player.injury ? player.injury.description : null
         }));
         
-        const awayPlayers = awayRosterData.athletes.slice(0, 10).map(athlete => ({
-            name: athlete.displayName,
-            position: athlete.position?.abbreviation || 'N/A',
-            injuryStatus: athlete.injuries && athlete.injuries.length > 0 ? athlete.injuries[0].status : null
+        const awayPlayers = awayRosterData.roster.slice(0, 10).map(player => ({
+            name: player.name,
+            position: player.position || 'N/A',
+            injuryStatus: player.injury ? player.injury.description : null
         }));
         
         console.log(`Fetched ${homePlayers.length} home players and ${awayPlayers.length} away players`);
