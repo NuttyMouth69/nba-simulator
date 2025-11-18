@@ -1,5 +1,6 @@
 // Main application controller
 let selectedGames = [];
+let allGames = [];  // Store full game objects
 let currentResults = null;
 
 // Initialize app on page load
@@ -36,6 +37,7 @@ async function loadTodaysGames() {
         const gameDateInput = document.getElementById('gameDate');
         const selectedDate = gameDateInput.value.replace(/-/g, ''); // Convert YYYY-MM-DD to YYYYMMDD
         const games = await fetchNBAGames(selectedDate);        
+                allGames = games;  // Store games globally
         if (!games || games.length === 0) {
             showError('No games available for today. Try selecting a different date.');
             loadingDiv.style.display = 'none';
@@ -117,7 +119,7 @@ async function runSimulation() {
         const progressText = document.getElementById('progressText');
         progressText.textContent = 'Fetching player rosters...';
         
-        const gameData = await fetchGameRosters(selectedGames[0]);
+        const gameData = await fetchGameRoster(sallGames.find(g => g.id === selectedGames[0]));
         
         if (!gameData) {
             showError('Could not load roster data. Please try again.');
