@@ -4,7 +4,11 @@ const CORS_PROXY = 'https://api.allorigins.win/get?url=';
 // Fetch today's NBA games
 async function fetchNBAGames() {
     try {
-        const url = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard';
+        // Get today's date in YYYYMMDD format for the API
+        const today = new Date();
+        const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
+        
+        const url = `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${dateStr}`;
         const proxyUrl = CORS_PROXY + encodeURIComponent(url);
         
         console.log('Fetching games from ESPN...');
@@ -14,6 +18,12 @@ async function fetchNBAGames() {
         
         const data = await response.json();
         const scoreboard = JSON.parse(data.contents);
+        
+        // Check if events exist and is an array
+        if (!scoreboard.events || !Array.isArray(scoreboard.events) || scoreboard.events.length === 0) {
+            console.log('No games found in API response');
+            return [];
+        }
         
         // Extract games
         const games = scoreboard.events.map(event => ({
@@ -29,7 +39,7 @@ async function fetchNBAGames() {
         
     } catch (error) {
         console.error('Failed to fetch games:', error);
-        return null;
+        return [];
     }
 }
 
