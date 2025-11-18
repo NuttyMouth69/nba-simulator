@@ -1,23 +1,27 @@
 // API fetching functions
-const CORS_PROXY = 'https://api.allorigins.win/get?url=';
 
-// Fetch today's NBA games
-async function fetchNBAGames() {
+// Fetch NBA games for a specific date
+async function fetchNBAGames(date = null) {
     try {
-        // Get today's date in YYYYMMDD format for the API
-        const today = new Date();
-        const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
+        // If no date provided, use today
+        let dateStr = '';
+        if (date) {
+            // Date is already in YYYYMMDD format from date picker
+            dateStr = date;
+        } else {
+            // Get today's date in YYYYMMDD format
+            const today = new Date();
+            dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
+        }
         
         const url = `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${dateStr}`;
-        const proxyUrl = CORS_PROXY + encodeURIComponent(url);
         
-        console.log('Fetching games from ESPN...');
+        console.log(`Fetching games from ESPN for date ${dateStr}...`);
         
-        const response = await fetch(proxyUrl);
+        const response = await fetch(url);
         if (!response.ok) throw new Error('API Error');
         
-        const data = await response.json();
-        const scoreboard = JSON.parse(data.contents);
+        const scoreboard = await response.json();
         
         // Check if events exist and is an array
         if (!scoreboard.events || !Array.isArray(scoreboard.events) || scoreboard.events.length === 0) {
@@ -47,15 +51,13 @@ async function fetchNBAGames() {
 async function fetchGameRosters(gameId) {
     try {
         const url = `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${gameId}`;
-        const proxyUrl = CORS_PROXY + encodeURIComponent(url);
         
         console.log('Fetching game summary and rosters...');
         
-        const response = await fetch(proxyUrl);
+        const response = await fetch(url);
         if (!response.ok) throw new Error('API Error');
         
-        const data = await response.json();
-        const summary = JSON.parse(data.contents);
+        const summary = await response.json();
         
         // Check if boxscore exists
         if (!summary.boxscore || !summary.boxscore.teams) {
