@@ -13,6 +13,21 @@ import json
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
+@app.route('/')
+def home():
+    """Root endpoint - API documentation"""
+    return jsonify({
+        'service': 'NBA API Proxy Server',
+        'status': 'running',
+        'endpoints': {
+            'scoreboard': '/api/scoreboard?gameDate=YYYY-MM-DD',
+            'team_roster': '/api/team/roster/<team_id>',
+            'all_players': '/api/players',
+            'health_check': '/health'
+        },
+        'example': 'Try /api/scoreboard or /health'
+    })
+
 # NBA.com API base URLs
 NBA_API_BASE = 'https://stats.nba.com/stats'
 NBA_CDN_BASE = 'https://cdn.nba.com'
@@ -92,15 +107,3 @@ def health_check():
     """Health check endpoint"""
     return jsonify({'status': 'healthy', 'service': 'NBA API Proxy'})
 
-if __name__ == '__main__':
-    print("🏀 NBA API Proxy Server Starting...")
-    print("📡 Server running on http://localhost:5000")
-    print("🔓 CORS enabled for all origins")
-    print("\nAvailable endpoints:")
-    print("  - GET /api/scoreboard")
-    print("  - GET /api/team/roster/<team_id>")
-    print("  - GET /api/players")
-    print("  - GET /health")
-    print("\nPress CTRL+C to stop\n")
-    
-    app.run(debug=True, host='0.0.0.0', port=5000)
