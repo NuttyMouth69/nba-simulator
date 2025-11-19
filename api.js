@@ -1,5 +1,5 @@
 // API fetching functions
-const PROXY_BASE_URL = 'https://flask-nba-server-bsarnovskiy.replit.app';
+const PROXY_BASE_URL = 'https://replit.com/@bsarnovskiy/FlaskNBAServer';
 
 // Helper function for date formatting (YYYY-MM-DD)
 function getDateStr(date = null) {
