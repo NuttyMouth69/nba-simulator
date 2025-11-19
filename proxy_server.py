@@ -2,7 +2,7 @@
 """
 NBA API CORS Proxy Server
 Simple Flask server that proxies requests to NBA.com API and adds CORS headers
-Run with: python proxy_server.py
+Run with: https://flask-nba-server-bsarnovskiy.replit.app/
 """
 
 from flask import Flask, request, jsonify
