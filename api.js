@@ -1,7 +1,7 @@
 // API fetching functions
 
 // Base URL for the proxy server
-const PROXY_BASE_URL = 'https://352e4599-5bfe-4fba-8985-2ca035d1e0f8-00-qlgmarfhzrpn.worf.replit.dev';
+const PROXY_BASE_URL = 'https://flask-nba-server-bsarnovskiy.replit.app/';
 // Fetch NBA games for a specific date
 async function fetchNBAGames(date = null) {
     try {
